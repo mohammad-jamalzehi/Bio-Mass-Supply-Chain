@@ -1,0 +1,93 @@
+[
+  {
+    "id": 1,
+    "title": "Heat conversion",
+    "latex": "q_{pf}=\\rho_f(1-m_f)h_f\\eta_{pf}",
+    "meaning": "Wet volume becomes dry mass, then fuel energy, then useful heat.",
+    "source": "validation/phase1.py#L53"
+  },
+  {
+    "id": 2,
+    "title": "Delivered volume and useful heat",
+    "latex": "A_{ft}=V_fN_{ft},\\qquad H_{fpt}=q_{pf}(F_{fpt}+U_{fpt})",
+    "meaning": "Trucks deliver whole loads. Both material streams use the same plant-specific coefficient.",
+    "source": "optimization/phase3.py#L230"
+  },
+  {
+    "id": 3,
+    "title": "Cost minimization",
+    "latex": "\\min\\ \\sum_{t,f}c_f\\rho_f(1-m_f)A_{ft}+\\sum_t c_gG_t",
+    "meaning": "Pay for delivered dry biomass and useful gas heat. Opening stock is already on hand.",
+    "source": "optimization/phase3.py#L216"
+  },
+  {
+    "id": 4,
+    "title": "Post-solve emissions",
+    "latex": "E=\\sum_{t,p,f} e_{pf}H_{fpt}+\\sum_t e_gG_t",
+    "meaning": "Gas is counted once per day. Factors describe a stated useful-heat basis. Emissions do not influence dispatch.",
+    "source": "optimization/phase3.py#L176"
+  },
+  {
+    "id": 5,
+    "title": "Shared fuel availability",
+    "latex": "\\sum_p F_{fpt}\\le A_{ft},\\qquad \\sum_p U_{fpt}\\le O_{ft}\\quad \\forall f,t",
+    "meaning": "Both plants draw from the same delivered and stored pools. Summing first prevents double claims.",
+    "source": "optimization/phase3.py#L235"
+  },
+  {
+    "id": 6,
+    "title": "Inventory conservation",
+    "latex": "I_{ft}=O_{ft}+A_{ft}-\\sum_p(F_{fpt}+U_{fpt})\\quad\\forall f,t",
+    "meaning": "Opening stock plus deliveries equals burn plus closing stock. The formulation has no disposal or storage loss.",
+    "source": "optimization/phase3.py#L237"
+  },
+  {
+    "id": 7,
+    "title": "Stock boundaries",
+    "latex": "O_{f1}=I_f^0,\\quad O_{ft}=I_{f,t-1}\\ (t>1),\\quad I_{fT}=I_f^T\\ \\text{if specified}",
+    "meaning": "Opening stock is an input. The optional final target applies to each fuel at the horizon.",
+    "source": "optimization/phase3.py#L233"
+  },
+  {
+    "id": 8,
+    "title": "Shared truck limit",
+    "latex": "\\sum_f N_{ft}\\le L_t\\quad\\forall t",
+    "meaning": "Fuel types compete for receiving slots.",
+    "source": "optimization/phase3.py#L225"
+  },
+  {
+    "id": 9,
+    "title": "Storage and optional pellet cap",
+    "latex": "\\sum_f I_{ft}\\le S_t,\\qquad I_{\\mathrm{wp},t}\\le S_t^{\\mathrm{wp}}\\ \\text{if specified}",
+    "meaning": "The pellet silo is interpreted as a pellet-only sublimit within total closing storage.",
+    "source": "optimization/phase3.py#L226"
+  },
+  {
+    "id": 10,
+    "title": "Plant capacity",
+    "latex": "\\sum_f H_{fpt}\\le K_{pt}\\quad \\forall p,t",
+    "meaning": "Each plant has a separate useful heat limit.",
+    "source": "optimization/phase3.py#L240"
+  },
+  {
+    "id": 11,
+    "title": "Demand balance",
+    "latex": "\\sum_{p,f}H_{fpt}+G_t=D_t\\quad\\forall t",
+    "meaning": "The two biomass plants and gas together meet each day's demand exactly.",
+    "source": "optimization/phase3.py#L239"
+  },
+  {
+    "id": 12,
+    "title": "Optional gas limit",
+    "latex": "G_t\\le \\bar G_t\\quad\\text{if specified}",
+    "meaning": "Gas is uncapped where no supply cap has been provided.",
+    "source": "optimization/phase3.py#L216"
+  },
+  {
+    "id": 13,
+    "title": "Domains",
+    "latex": "N_{ft}\\in\\mathbb Z_{\\ge0},\\qquad F_{fpt},U_{fpt},I_{ft},G_t\\in\\mathbb R_{\\ge0}",
+    "meaning": "The MILP rounds no physical fuel flows. Only the truck decisions are integer-constrained.",
+    "source": "optimization/phase3.py#L253"
+  }
+]

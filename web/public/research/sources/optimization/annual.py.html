@@ -1,0 +1,215 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Mohamad Jamalzehi, Kosar Ghazali"><title>optimization/annual.py</title>
+<style>
+body{font:16px system-ui,sans-serif;margin:1.5rem;color:#193943;background:#f8f8f3}
+pre{overflow:auto;padding:1rem;border:1px solid #dce4db;background:white;line-height:1.5}
+pre span{display:block}pre span:target{background:#dbeee4}
+a{color:#116d61}
+</style></head><body><a href="../../../">Research website</a><h1>optimization/annual.py</h1>
+<p>Project authors: Mohamad Jamalzehi and Kosar Ghazali</p>
+<pre><code><span id="L1"><a href="#L1">   1</a> &quot;&quot;&quot;Run audited historical-input experiments and export dashboard data.&quot;&quot;&quot;</span>
+<span id="L2"><a href="#L2">   2</a> </span>
+<span id="L3"><a href="#L3">   3</a> import argparse</span>
+<span id="L4"><a href="#L4">   4</a> import csv</span>
+<span id="L5"><a href="#L5">   5</a> import json</span>
+<span id="L6"><a href="#L6">   6</a> import sys</span>
+<span id="L7"><a href="#L7">   7</a> from dataclasses import asdict, replace</span>
+<span id="L8"><a href="#L8">   8</a> from math import fsum, isclose, isfinite</span>
+<span id="L9"><a href="#L9">   9</a> from pathlib import Path</span>
+<span id="L10"><a href="#L10">  10</a> from time import perf_counter</span>
+<span id="L11"><a href="#L11">  11</a> from unittest.mock import patch</span>
+<span id="L12"><a href="#L12">  12</a> </span>
+<span id="L13"><a href="#L13">  13</a> import scipy</span>
+<span id="L14"><a href="#L14">  14</a> </span>
+<span id="L15"><a href="#L15">  15</a> from optimization import phase3</span>
+<span id="L16"><a href="#L16">  16</a> from optimization.annual_inputs import DEFAULT_CONFIG, LoadedScenario, load_scenario</span>
+<span id="L17"><a href="#L17">  17</a> </span>
+<span id="L18"><a href="#L18">  18</a> COST_SCALE = 1000</span>
+<span id="L19"><a href="#L19">  19</a> COST_TOL = 0.0001</span>
+<span id="L20"><a href="#L20">  20</a> FLOW_TOL = 1e-6</span>
+<span id="L21"><a href="#L21">  21</a> </span>
+<span id="L22"><a href="#L22">  22</a> </span>
+<span id="L23"><a href="#L23">  23</a> def solver_version() -&gt; dict:</span>
+<span id="L24"><a href="#L24">  24</a>     # The public milp result gives no HiGHS version. Read the pinned wheel&#x27;s</span>
+<span id="L25"><a href="#L25">  25</a>     # bundled constants if exposed, without depending on them to solve.</span>
+<span id="L26"><a href="#L26">  26</a>     try:</span>
+<span id="L27"><a href="#L27">  27</a>         from scipy.optimize._highspy import _core</span>
+<span id="L28"><a href="#L28">  28</a>         version = &quot;.&quot;.join(str(getattr(_core, f&quot;HIGHS_VERSION_{part}&quot;)) for part in (&quot;MAJOR&quot;, &quot;MINOR&quot;, &quot;PATCH&quot;))</span>
+<span id="L29"><a href="#L29">  29</a>     except (ImportError, AttributeError):</span>
+<span id="L30"><a href="#L30">  30</a>         version = None</span>
+<span id="L31"><a href="#L31">  31</a>     return {&quot;backend&quot;: &quot;HiGHS via SciPy milp&quot;, &quot;scipy_version&quot;: scipy.__version__, &quot;highs_version&quot;: version}</span>
+<span id="L32"><a href="#L32">  32</a> </span>
+<span id="L33"><a href="#L33">  33</a> </span>
+<span id="L34"><a href="#L34">  34</a> def annual_audit(scenario: phase3.Scenario, plans: tuple[phase3.DayPlan, ...], objective: float) -&gt; tuple[tuple, dict]:</span>
+<span id="L35"><a href="#L35">  35</a>     &quot;&quot;&quot;Recheck all daily constraints and reconcile whole-horizon totals.&quot;&quot;&quot;</span>
+<span id="L36"><a href="#L36">  36</a>     audited = phase3.verify_plan(scenario, plans)</span>
+<span id="L37"><a href="#L37">  37</a>     residuals = {}</span>
+<span id="L38"><a href="#L38">  38</a>     purchase_costs = []</span>
+<span id="L39"><a href="#L39">  39</a>     for f, fuel in scenario.feedstocks.items():</span>
+<span id="L40"><a href="#L40">  40</a>         ledger = [day.inventory_by_fuel[f] for day in audited]</span>
+<span id="L41"><a href="#L41">  41</a>         delivered = fsum(item.delivered for item in ledger)</span>
+<span id="L42"><a href="#L42">  42</a>         burned = fsum(item.fresh_burn + item.stored_burn for item in ledger)</span>
+<span id="L43"><a href="#L43">  43</a>         residuals[f] = fsum((scenario.initial_m3[f], delivered, -burned, -ledger[-1].closing))</span>
+<span id="L44"><a href="#L44">  44</a>         if abs(residuals[f]) &gt; FLOW_TOL:</span>
+<span id="L45"><a href="#L45">  45</a>             raise ValueError(f&quot;{f}: annual material balance residual exceeds tolerance&quot;)</span>
+<span id="L46"><a href="#L46">  46</a>         purchase_costs.append(delivered * fuel.wet_density * (1 - fuel.moisture) * fuel.cost_per_dry_tonne)</span>
+<span id="L47"><a href="#L47">  47</a>     gas_gj = fsum(plan.gas_gj for plan in plans)</span>
+<span id="L48"><a href="#L48">  48</a>     biomass_gj = fsum(</span>
+<span id="L49"><a href="#L49">  49</a>         heat for day in audited for plant in day.biomass_gj_by_plant_and_fuel.values() for heat in plant.values()</span>
+<span id="L50"><a href="#L50">  50</a>     )</span>
+<span id="L51"><a href="#L51">  51</a>     demand = fsum(day.demand_gj for day in scenario.days)</span>
+<span id="L52"><a href="#L52">  52</a>     if not isclose(biomass_gj + gas_gj, demand, rel_tol=0, abs_tol=FLOW_TOL):</span>
+<span id="L53"><a href="#L53">  53</a>         raise ValueError(&quot;annual useful heat does not equal demand&quot;)</span>
+<span id="L54"><a href="#L54">  54</a>     cost = fsum(purchase_costs) + gas_gj * scenario.gas_cost_per_useful_gj</span>
+<span id="L55"><a href="#L55">  55</a>     if not all(isclose(cost, value, rel_tol=0, abs_tol=COST_TOL)</span>
+<span id="L56"><a href="#L56">  56</a>                for value in (objective, fsum(day.cost for day in audited))):</span>
+<span id="L57"><a href="#L57">  57</a>         raise ValueError(&quot;annual recomputed cost differs from solver objective&quot;)</span>
+<span id="L58"><a href="#L58">  58</a>     return audited, {</span>
+<span id="L59"><a href="#L59">  59</a>         &quot;cost&quot;: cost, &quot;demand_gj&quot;: demand, &quot;gas_gj&quot;: gas_gj, &quot;biomass_gj&quot;: biomass_gj,</span>
+<span id="L60"><a href="#L60">  60</a>         &quot;emissions_tco2e&quot;: fsum(day.emissions_tco2e for day in audited),</span>
+<span id="L61"><a href="#L61">  61</a>         &quot;fuel_balance_residual_m3&quot;: residuals,</span>
+<span id="L62"><a href="#L62">  62</a>     }</span>
+<span id="L63"><a href="#L63">  63</a> </span>
+<span id="L64"><a href="#L64">  64</a> </span>
+<span id="L65"><a href="#L65">  65</a> def finite(value, scale: float = 1) -&gt; float | None:</span>
+<span id="L66"><a href="#L66">  66</a>     if value is None or not isfinite(value):</span>
+<span id="L67"><a href="#L67">  67</a>         return None</span>
+<span id="L68"><a href="#L68">  68</a>     return float(value) * scale</span>
+<span id="L69"><a href="#L69">  69</a> </span>
+<span id="L70"><a href="#L70">  70</a> </span>
+<span id="L71"><a href="#L71">  71</a> def decode_incumbent(scenario: phase3.Scenario, vector) -&gt; tuple[phase3.DayPlan, ...]:</span>
+<span id="L72"><a href="#L72">  72</a>     &quot;&quot;&quot;Read the unchanged Phase 3 column order when it returns no plan.&quot;&quot;&quot;</span>
+<span id="L73"><a href="#L73">  73</a>     width = 1 + len(scenario.feedstocks) * (2 + 2 * len(scenario.plants))</span>
+<span id="L74"><a href="#L74">  74</a>     plans = []</span>
+<span id="L75"><a href="#L75">  75</a>     for values in vector.reshape(len(scenario.days), width):</span>
+<span id="L76"><a href="#L76">  76</a>         entries = iter(float(value) for value in values)</span>
+<span id="L77"><a href="#L77">  77</a>         gas = next(entries)</span>
+<span id="L78"><a href="#L78">  78</a>         trucks, closing = {}, {}</span>
+<span id="L79"><a href="#L79">  79</a>         burns = {plant: {} for plant in scenario.plants}</span>
+<span id="L80"><a href="#L80">  80</a>         for fuel in scenario.feedstocks:</span>
+<span id="L81"><a href="#L81">  81</a>             count = next(entries)</span>
+<span id="L82"><a href="#L82">  82</a>             trucks[fuel] = round(count)</span>
+<span id="L83"><a href="#L83">  83</a>             if not isclose(count, trucks[fuel], rel_tol=0, abs_tol=phase3.TOL):</span>
+<span id="L84"><a href="#L84">  84</a>                 raise ValueError(&quot;solver incumbent has a fractional truckload&quot;)</span>
+<span id="L85"><a href="#L85">  85</a>             closing[fuel] = next(entries)</span>
+<span id="L86"><a href="#L86">  86</a>             for plant in scenario.plants:</span>
+<span id="L87"><a href="#L87">  87</a>                 burns[plant][fuel] = phase3.Burn(next(entries), next(entries))</span>
+<span id="L88"><a href="#L88">  88</a>         plans.append(phase3.DayPlan(trucks, closing, burns, gas))</span>
+<span id="L89"><a href="#L89">  89</a>     return tuple(plans)</span>
+<span id="L90"><a href="#L90">  90</a> </span>
+<span id="L91"><a href="#L91">  91</a> </span>
+<span id="L92"><a href="#L92">  92</a> def run(loaded: LoadedScenario, time_limit: float) -&gt; dict:</span>
+<span id="L93"><a href="#L93">  93</a>     &quot;&quot;&quot;Run one experiment synchronously. The CLI uses a dedicated process.&quot;&quot;&quot;</span>
+<span id="L94"><a href="#L94">  94</a>     if not isfinite(time_limit) or time_limit &lt;= 0:</span>
+<span id="L95"><a href="#L95">  95</a>         raise ValueError(&quot;solver time limit must be finite and positive&quot;)</span>
+<span id="L96"><a href="#L96">  96</a>     original_milp = phase3.milp</span>
+<span id="L97"><a href="#L97">  97</a>     raw = None</span>
+<span id="L98"><a href="#L98">  98</a>     seconds = None</span>
+<span id="L99"><a href="#L99">  99</a> </span>
+<span id="L100"><a href="#L100"> 100</a>     def bounded_milp(*args, **kwargs):</span>
+<span id="L101"><a href="#L101"> 101</a>         nonlocal raw, seconds</span>
+<span id="L102"><a href="#L102"> 102</a>         options = {**kwargs.pop(&quot;options&quot;, {}), &quot;time_limit&quot;: time_limit}</span>
+<span id="L103"><a href="#L103"> 103</a>         started = perf_counter()</span>
+<span id="L104"><a href="#L104"> 104</a>         raw = original_milp(*args, options=options, **kwargs)</span>
+<span id="L105"><a href="#L105"> 105</a>         seconds = perf_counter() - started</span>
+<span id="L106"><a href="#L106"> 106</a>         if raw.x is not None:</span>
+<span id="L107"><a href="#L107"> 107</a>             # HiGHS can return tiny negative values at zero. Keep material</span>
+<span id="L108"><a href="#L108"> 108</a>             # violations visible and canonicalize only within Phase 3 tolerance.</span>
+<span id="L109"><a href="#L109"> 109</a>             raw.x = raw.x.copy()</span>
+<span id="L110"><a href="#L110"> 110</a>             raw.x[(raw.x &lt; 0) &amp; (raw.x &gt;= -phase3.TOL)] = 0.0</span>
+<span id="L111"><a href="#L111"> 111</a>         return raw</span>
+<span id="L112"><a href="#L112"> 112</a> </span>
+<span id="L113"><a href="#L113"> 113</a>     model = loaded.scenario</span>
+<span id="L114"><a href="#L114"> 114</a>     scaled = replace(model, gas_cost_per_useful_gj=model.gas_cost_per_useful_gj / COST_SCALE,</span>
+<span id="L115"><a href="#L115"> 115</a>                      feedstocks={key: replace(fuel, cost_per_dry_tonne=fuel.cost_per_dry_tonne / COST_SCALE)</span>
+<span id="L116"><a href="#L116"> 116</a>                                  for key, fuel in model.feedstocks.items()})</span>
+<span id="L117"><a href="#L117"> 117</a>     # Phase 3 remains byte-for-byte unchanged. In the isolated experiment</span>
+<span id="L118"><a href="#L118"> 118</a>     # process, add a solver deadline and retain raw termination diagnostics.</span>
+<span id="L119"><a href="#L119"> 119</a>     validation_error = None</span>
+<span id="L120"><a href="#L120"> 120</a>     with patch.object(phase3, &quot;milp&quot;, bounded_milp):</span>
+<span id="L121"><a href="#L121"> 121</a>         try:</span>
+<span id="L122"><a href="#L122"> 122</a>             result = phase3.solve(scaled)</span>
+<span id="L123"><a href="#L123"> 123</a>         except ValueError as error:</span>
+<span id="L124"><a href="#L124"> 124</a>             if raw is None or raw.status != 0:</span>
+<span id="L125"><a href="#L125"> 125</a>                 raise</span>
+<span id="L126"><a href="#L126"> 126</a>             validation_error = str(error)</span>
+<span id="L127"><a href="#L127"> 127</a>             result = None</span>
+<span id="L128"><a href="#L128"> 128</a> </span>
+<span id="L129"><a href="#L129"> 129</a>     objective = finite(getattr(raw, &quot;fun&quot;, None), COST_SCALE)</span>
+<span id="L130"><a href="#L130"> 130</a>     bound = finite(getattr(raw, &quot;mip_dual_bound&quot;, None), COST_SCALE)</span>
+<span id="L131"><a href="#L131"> 131</a>     diagnostics = {</span>
+<span id="L132"><a href="#L132"> 132</a>         **solver_version(), &quot;status_code&quot;: int(raw.status), &quot;message&quot;: raw.message,</span>
+<span id="L133"><a href="#L133"> 133</a>         &quot;runtime_seconds&quot;: seconds, &quot;time_limit_seconds&quot;: time_limit,</span>
+<span id="L134"><a href="#L134"> 134</a>         &quot;solver_reported_objective&quot;: objective, &quot;best_bound&quot;: bound, &quot;mip_gap&quot;: finite(getattr(raw, &quot;mip_gap&quot;, None)),</span>
+<span id="L135"><a href="#L135"> 135</a>     }</span>
+<span id="L136"><a href="#L136"> 136</a>     record = {</span>
+<span id="L137"><a href="#L137"> 137</a>         &quot;schema_version&quot;: 1, &quot;data_kind&quot;: &quot;historical_input_experiment&quot;, &quot;campus_inputs_validated&quot;: False,</span>
+<span id="L138"><a href="#L138"> 138</a>         &quot;emissions_accuracy&quot;: &quot;unverified_factors_and_heat_basis&quot;,</span>
+<span id="L139"><a href="#L139"> 139</a>         &quot;scenario_id&quot;: model.name, &quot;label&quot;: loaded.label, &quot;days_requested&quot;: len(model.days),</span>
+<span id="L140"><a href="#L140"> 140</a>         &quot;input_sha256&quot;: loaded.input_sha256, &quot;assumptions&quot;: list(loaded.assumptions),</span>
+<span id="L141"><a href="#L141"> 141</a>         &quot;units&quot;: {&quot;cost&quot;: &quot;source dollars&quot;, &quot;heat&quot;: &quot;GJ useful&quot;, &quot;volume&quot;: &quot;m3&quot;, &quot;emissions&quot;: &quot;tCO2e provisional&quot;},</span>
+<span id="L142"><a href="#L142"> 142</a>         &quot;inputs&quot;: asdict(model), &quot;solver&quot;: diagnostics, &quot;validation&quot;: &quot;no_verified_plan&quot;, &quot;totals&quot;: None, &quot;days&quot;: [],</span>
+<span id="L143"><a href="#L143"> 143</a>     }</span>
+<span id="L144"><a href="#L144"> 144</a>     if raw.status not in (0, 1) or raw.x is None or objective is None:</span>
+<span id="L145"><a href="#L145"> 145</a>         return record</span>
+<span id="L146"><a href="#L146"> 146</a>     try:</span>
+<span id="L147"><a href="#L147"> 147</a>         if validation_error is not None:</span>
+<span id="L148"><a href="#L148"> 148</a>             raise ValueError(validation_error)</span>
+<span id="L149"><a href="#L149"> 149</a>         decoded = decode_incumbent(model, raw.x)</span>
+<span id="L150"><a href="#L150"> 150</a>         if raw.status == 0 and decoded != result.plans:</span>
+<span id="L151"><a href="#L151"> 151</a>             raise ValueError(&quot;annual decoder disagrees with the Phase 3 column order&quot;)</span>
+<span id="L152"><a href="#L152"> 152</a>         audited, totals = annual_audit(model, decoded, objective)</span>
+<span id="L153"><a href="#L153"> 153</a>         if raw.status == 0 and (bound is None or not isclose(totals[&quot;cost&quot;], bound, rel_tol=0, abs_tol=COST_TOL)):</span>
+<span id="L154"><a href="#L154"> 154</a>             raise ValueError(&quot;annual objective does not match the solver bound&quot;)</span>
+<span id="L155"><a href="#L155"> 155</a>         if bound is not None and bound &gt; totals[&quot;cost&quot;] + COST_TOL:</span>
+<span id="L156"><a href="#L156"> 156</a>             raise ValueError(&quot;solver bound exceeds independently checked incumbent cost&quot;)</span>
+<span id="L157"><a href="#L157"> 157</a>     except ValueError as error:</span>
+<span id="L158"><a href="#L158"> 158</a>         record.update(validation=&quot;audit_failed&quot;, validation_error=str(error))</span>
+<span id="L159"><a href="#L159"> 159</a>         return record</span>
+<span id="L160"><a href="#L160"> 160</a>     record.update(</span>
+<span id="L161"><a href="#L161"> 161</a>         validation=&quot;verified_against_stated_scenario&quot; if raw.status == 0 else &quot;audited_feasible_incumbent&quot;,</span>
+<span id="L162"><a href="#L162"> 162</a>         totals=totals,</span>
+<span id="L163"><a href="#L163"> 163</a>         days=[{&quot;day&quot;: number, &quot;demand_gj&quot;: limits.demand_gj, **asdict(plan), **asdict(audit)}</span>
+<span id="L164"><a href="#L164"> 164</a>               for number, (plan, audit, limits) in enumerate(zip(decoded, audited, model.days, strict=True), start=1)],</span>
+<span id="L165"><a href="#L165"> 165</a>     )</span>
+<span id="L166"><a href="#L166"> 166</a>     return record</span>
+<span id="L167"><a href="#L167"> 167</a> </span>
+<span id="L168"><a href="#L168"> 168</a> </span>
+<span id="L169"><a href="#L169"> 169</a> def export(record: dict, directory: Path) -&gt; None:</span>
+<span id="L170"><a href="#L170"> 170</a>     directory.mkdir(parents=True, exist_ok=True)</span>
+<span id="L171"><a href="#L171"> 171</a>     (directory / &quot;result.json&quot;).write_text(json.dumps(record, indent=2, allow_nan=False) + &quot;\n&quot;, encoding=&quot;utf-8&quot;)</span>
+<span id="L172"><a href="#L172"> 172</a>     with (directory / &quot;flows.csv&quot;).open(&quot;w&quot;, newline=&quot;&quot;, encoding=&quot;utf-8&quot;) as handle:</span>
+<span id="L173"><a href="#L173"> 173</a>         writer = csv.writer(handle)</span>
+<span id="L174"><a href="#L174"> 174</a>         writer.writerow((&quot;day&quot;, &quot;plant&quot;, &quot;feedstock&quot;, &quot;trucks&quot;, &quot;opening_m3&quot;, &quot;delivered_m3&quot;, &quot;closing_m3&quot;,</span>
+<span id="L175"><a href="#L175"> 175</a>                          &quot;fresh_burn_m3&quot;, &quot;stored_burn_m3&quot;, &quot;useful_heat_gj&quot;, &quot;day_demand_gj&quot;, &quot;day_cost&quot;, &quot;day_emissions_tco2e&quot;))</span>
+<span id="L176"><a href="#L176"> 176</a>         for day in record[&quot;days&quot;]:</span>
+<span id="L177"><a href="#L177"> 177</a>             for fuel, inventory in day[&quot;inventory_by_fuel&quot;].items():</span>
+<span id="L178"><a href="#L178"> 178</a>                 writer.writerow((day[&quot;day&quot;], &quot;&quot;, fuel, day[&quot;trucks&quot;][fuel], inventory[&quot;opening&quot;],</span>
+<span id="L179"><a href="#L179"> 179</a>                                  inventory[&quot;delivered&quot;], inventory[&quot;closing&quot;], &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;))</span>
+<span id="L180"><a href="#L180"> 180</a>             for plant, fuels in day[&quot;burns&quot;].items():</span>
+<span id="L181"><a href="#L181"> 181</a>                 for fuel, burn in fuels.items():</span>
+<span id="L182"><a href="#L182"> 182</a>                     writer.writerow((day[&quot;day&quot;], plant, fuel, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, burn[&quot;fresh_m3&quot;],</span>
+<span id="L183"><a href="#L183"> 183</a>                                      burn[&quot;stored_m3&quot;], day[&quot;biomass_gj_by_plant_and_fuel&quot;][plant][fuel], &quot;&quot;, &quot;&quot;, &quot;&quot;))</span>
+<span id="L184"><a href="#L184"> 184</a>             writer.writerow((day[&quot;day&quot;], &quot;gas&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, day[&quot;gas_gj&quot;],</span>
+<span id="L185"><a href="#L185"> 185</a>                              day[&quot;demand_gj&quot;], day[&quot;cost&quot;], day[&quot;emissions_tco2e&quot;]))</span>
+<span id="L186"><a href="#L186"> 186</a> </span>
+<span id="L187"><a href="#L187"> 187</a> </span>
+<span id="L188"><a href="#L188"> 188</a> def main() -&gt; int:</span>
+<span id="L189"><a href="#L189"> 189</a>     parser = argparse.ArgumentParser(description=__doc__)</span>
+<span id="L190"><a href="#L190"> 190</a>     parser.add_argument(&quot;--config&quot;, type=Path, default=DEFAULT_CONFIG)</span>
+<span id="L191"><a href="#L191"> 191</a>     parser.add_argument(&quot;--scenario&quot;, default=&quot;gams-historical-inputs&quot;)</span>
+<span id="L192"><a href="#L192"> 192</a>     parser.add_argument(&quot;--days&quot;, type=int)</span>
+<span id="L193"><a href="#L193"> 193</a>     parser.add_argument(&quot;--time-limit&quot;, type=float, default=30)</span>
+<span id="L194"><a href="#L194"> 194</a>     parser.add_argument(&quot;--output&quot;, type=Path)</span>
+<span id="L195"><a href="#L195"> 195</a>     args = parser.parse_args()</span>
+<span id="L196"><a href="#L196"> 196</a>     record = run(load_scenario(args.config, args.scenario, args.days), args.time_limit)</span>
+<span id="L197"><a href="#L197"> 197</a>     if args.output:</span>
+<span id="L198"><a href="#L198"> 198</a>         export(record, args.output)</span>
+<span id="L199"><a href="#L199"> 199</a>     summary_keys = (&quot;scenario_id&quot;, &quot;days_requested&quot;, &quot;input_sha256&quot;, &quot;validation&quot;, &quot;solver&quot;, &quot;totals&quot;, &quot;validation_error&quot;)</span>
+<span id="L200"><a href="#L200"> 200</a>     print(json.dumps({key: record[key] for key in summary_keys if key in record}, allow_nan=False))</span>
+<span id="L201"><a href="#L201"> 201</a>     return 0 if record[&quot;validation&quot;] == &quot;verified_against_stated_scenario&quot; else 2</span>
+<span id="L202"><a href="#L202"> 202</a> </span>
+<span id="L203"><a href="#L203"> 203</a> </span>
+<span id="L204"><a href="#L204"> 204</a> if __name__ == &quot;__main__&quot;:</span>
+<span id="L205"><a href="#L205"> 205</a>     sys.exit(main())</span></code></pre></body></html>

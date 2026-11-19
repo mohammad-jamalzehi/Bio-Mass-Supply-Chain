@@ -1,0 +1,817 @@
+{
+  "fixtures": [
+    {
+      "phase": 2,
+      "scenario": "one-fuel",
+      "data_kind": "synthetic_test_fixture",
+      "solver": {
+        "status": 0,
+        "best_cost_bound": 33.0,
+        "mip_gap": 0.0
+      },
+      "totals": {
+        "cost": 33.0,
+        "emissions_tco2e": 5.4
+      },
+      "days": [
+        {
+          "trucks": 1,
+          "inventory": {
+            "opening": 0,
+            "delivered": 3,
+            "fresh_burn": 2.0,
+            "stored_burn": 0.0,
+            "closing": 1.0
+          },
+          "gas_heat_gj": 0.0
+        },
+        {
+          "trucks": 0,
+          "inventory": {
+            "opening": 1.0,
+            "delivered": 0,
+            "fresh_burn": 0.0,
+            "stored_burn": 1.0,
+            "closing": 0.0
+          },
+          "gas_heat_gj": 6.0
+        },
+        {
+          "trucks": 0,
+          "inventory": {
+            "opening": 0.0,
+            "delivered": 0,
+            "fresh_burn": 0.0,
+            "stored_burn": 0.0,
+            "closing": 0.0
+          },
+          "gas_heat_gj": 3.0
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "schema_version": 1,
+      "data_kind": "synthetic_test_fixture",
+      "scenario": "base",
+      "feedstocks": [
+        "wc",
+        "wp",
+        "bq"
+      ],
+      "plants": [
+        "existing",
+        "new"
+      ],
+      "units": {
+        "volume": "m3",
+        "heat": "GJ useful",
+        "cost": "synthetic USD",
+        "emissions": "tCO2e"
+      },
+      "solver": {
+        "backend": "HiGHS via SciPy milp",
+        "scipy_version": "1.18.1",
+        "status": 0,
+        "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+        "best_cost_bound": 5.0,
+        "mip_gap": 0.0
+      },
+      "totals": {
+        "cost": 5.0,
+        "emissions_tco2e": 0.8
+      },
+      "days": [
+        {
+          "day": 1,
+          "limits": {
+            "demand_gj": 6,
+            "truck_limit": 1,
+            "total_storage_m3": 1,
+            "plant_heat_capacity_gj": {
+              "existing": 2,
+              "new": 4
+            },
+            "pellet_silo_m3": 0.5,
+            "gas_capacity_gj": null
+          },
+          "trucks": {
+            "wc": 0,
+            "wp": 1,
+            "bq": 0
+          },
+          "closing_m3": {
+            "wc": 0.0,
+            "wp": 0.5,
+            "bq": 0.0
+          },
+          "burns": {
+            "existing": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 1.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": -0.0,
+                "stored_m3": 0.0
+              }
+            },
+            "new": {
+              "wc": {
+                "fresh_m3": -0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 1.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              }
+            }
+          },
+          "gas_gj": 0.0,
+          "inventory_by_fuel": {
+            "wc": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            },
+            "wp": {
+              "opening": 0.0,
+              "delivered": 2.5,
+              "fresh_burn": 2.0,
+              "stored_burn": 0.0,
+              "closing": 0.5
+            },
+            "bq": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            }
+          },
+          "biomass_gj_by_plant_and_fuel": {
+            "existing": {
+              "wc": 0.0,
+              "wp": 2.0,
+              "bq": 0.0
+            },
+            "new": {
+              "wc": 0.0,
+              "wp": 4.0,
+              "bq": 0.0
+            }
+          },
+          "cost": 5.0,
+          "emissions_tco2e": 0.6000000000000001
+        },
+        {
+          "day": 2,
+          "limits": {
+            "demand_gj": 2,
+            "truck_limit": 0,
+            "total_storage_m3": 1,
+            "plant_heat_capacity_gj": {
+              "existing": 2,
+              "new": 2
+            },
+            "pellet_silo_m3": 0.5,
+            "gas_capacity_gj": null
+          },
+          "trucks": {
+            "wc": 0,
+            "wp": 0,
+            "bq": 0
+          },
+          "closing_m3": {
+            "wc": 0.0,
+            "wp": 0.0,
+            "bq": 0.0
+          },
+          "burns": {
+            "existing": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              }
+            },
+            "new": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": -0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.5
+              },
+              "bq": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              }
+            }
+          },
+          "gas_gj": 0.0,
+          "inventory_by_fuel": {
+            "wc": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            },
+            "wp": {
+              "opening": 0.5,
+              "delivered": 0.0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.5,
+              "closing": 0.0
+            },
+            "bq": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            }
+          },
+          "biomass_gj_by_plant_and_fuel": {
+            "existing": {
+              "wc": 0.0,
+              "wp": 0.0,
+              "bq": 0.0
+            },
+            "new": {
+              "wc": 0.0,
+              "wp": 2.0,
+              "bq": 0.0
+            }
+          },
+          "cost": 0.0,
+          "emissions_tco2e": 0.2
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "schema_version": 1,
+      "data_kind": "synthetic_test_fixture",
+      "scenario": "tight-silo",
+      "feedstocks": [
+        "wc",
+        "wp",
+        "bq"
+      ],
+      "plants": [
+        "existing",
+        "new"
+      ],
+      "units": {
+        "volume": "m3",
+        "heat": "GJ useful",
+        "cost": "synthetic USD",
+        "emissions": "tCO2e"
+      },
+      "solver": {
+        "backend": "HiGHS via SciPy milp",
+        "scipy_version": "1.18.1",
+        "status": 0,
+        "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+        "best_cost_bound": 8.4,
+        "mip_gap": 0.0
+      },
+      "totals": {
+        "cost": 8.4,
+        "emissions_tco2e": 1.5999999999999999
+      },
+      "days": [
+        {
+          "day": 1,
+          "limits": {
+            "demand_gj": 6,
+            "truck_limit": 1,
+            "total_storage_m3": 1,
+            "plant_heat_capacity_gj": {
+              "existing": 2,
+              "new": 4
+            },
+            "pellet_silo_m3": 0.4,
+            "gas_capacity_gj": null
+          },
+          "trucks": {
+            "wc": 1,
+            "wp": 0,
+            "bq": 0
+          },
+          "closing_m3": {
+            "wc": 0.6666666666666666,
+            "wp": 0.0,
+            "bq": 0.0
+          },
+          "burns": {
+            "existing": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": -0.0,
+                "stored_m3": 0.0
+              }
+            },
+            "new": {
+              "wc": {
+                "fresh_m3": 1.3333333333333333,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              }
+            }
+          },
+          "gas_gj": 2.0,
+          "inventory_by_fuel": {
+            "wc": {
+              "opening": 0.0,
+              "delivered": 2,
+              "fresh_burn": 1.3333333333333333,
+              "stored_burn": 0.0,
+              "closing": 0.6666666666666666
+            },
+            "wp": {
+              "opening": 0.0,
+              "delivered": 0.0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            },
+            "bq": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            }
+          },
+          "biomass_gj_by_plant_and_fuel": {
+            "existing": {
+              "wc": 0.0,
+              "wp": 0.0,
+              "bq": 0.0
+            },
+            "new": {
+              "wc": 4.0,
+              "wp": 0.0,
+              "bq": 0.0
+            }
+          },
+          "cost": 8.4,
+          "emissions_tco2e": 1.4
+        },
+        {
+          "day": 2,
+          "limits": {
+            "demand_gj": 2,
+            "truck_limit": 0,
+            "total_storage_m3": 1,
+            "plant_heat_capacity_gj": {
+              "existing": 2,
+              "new": 2
+            },
+            "pellet_silo_m3": 0.5,
+            "gas_capacity_gj": null
+          },
+          "trucks": {
+            "wc": 0,
+            "wp": 0,
+            "bq": 0
+          },
+          "closing_m3": {
+            "wc": 0.0,
+            "wp": 0.0,
+            "bq": 0.0
+          },
+          "burns": {
+            "existing": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              }
+            },
+            "new": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.6666666666666666
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              }
+            }
+          },
+          "gas_gj": 0.0,
+          "inventory_by_fuel": {
+            "wc": {
+              "opening": 0.6666666666666666,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.6666666666666666,
+              "closing": 0.0
+            },
+            "wp": {
+              "opening": 0.0,
+              "delivered": 0.0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            },
+            "bq": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            }
+          },
+          "biomass_gj_by_plant_and_fuel": {
+            "existing": {
+              "wc": 0.0,
+              "wp": 0.0,
+              "bq": 0.0
+            },
+            "new": {
+              "wc": 2.0,
+              "wp": 0.0,
+              "bq": 0.0
+            }
+          },
+          "cost": 0.0,
+          "emissions_tco2e": 0.2
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "schema_version": 1,
+      "data_kind": "synthetic_test_fixture",
+      "scenario": "no-storage",
+      "feedstocks": [
+        "wc",
+        "wp",
+        "bq"
+      ],
+      "plants": [
+        "existing",
+        "new"
+      ],
+      "units": {
+        "volume": "m3",
+        "heat": "GJ useful",
+        "cost": "synthetic USD",
+        "emissions": "tCO2e"
+      },
+      "solver": {
+        "backend": "HiGHS via SciPy milp",
+        "scipy_version": "1.18.1",
+        "status": 0,
+        "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+        "best_cost_bound": 10.0,
+        "mip_gap": 0.0
+      },
+      "totals": {
+        "cost": 10.0,
+        "emissions_tco2e": 1.6
+      },
+      "days": [
+        {
+          "day": 1,
+          "limits": {
+            "demand_gj": 6,
+            "truck_limit": 1,
+            "total_storage_m3": 0,
+            "plant_heat_capacity_gj": {
+              "existing": 2,
+              "new": 4
+            },
+            "pellet_silo_m3": 0.5,
+            "gas_capacity_gj": null
+          },
+          "trucks": {
+            "wc": 0,
+            "wp": 0,
+            "bq": 1
+          },
+          "closing_m3": {
+            "wc": 0.0,
+            "wp": 0.0,
+            "bq": 0.0
+          },
+          "burns": {
+            "existing": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 0.6666666666666666,
+                "stored_m3": 0.0
+              }
+            },
+            "new": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 1.3333333333333333,
+                "stored_m3": 0.0
+              }
+            }
+          },
+          "gas_gj": 0.0,
+          "inventory_by_fuel": {
+            "wc": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            },
+            "wp": {
+              "opening": 0.0,
+              "delivered": 0.0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            },
+            "bq": {
+              "opening": 0.0,
+              "delivered": 2,
+              "fresh_burn": 2.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            }
+          },
+          "biomass_gj_by_plant_and_fuel": {
+            "existing": {
+              "wc": 0.0,
+              "wp": 0.0,
+              "bq": 2.0
+            },
+            "new": {
+              "wc": 0.0,
+              "wp": 0.0,
+              "bq": 4.0
+            }
+          },
+          "cost": 4.0,
+          "emissions_tco2e": 0.6000000000000001
+        },
+        {
+          "day": 2,
+          "limits": {
+            "demand_gj": 2,
+            "truck_limit": 0,
+            "total_storage_m3": 1,
+            "plant_heat_capacity_gj": {
+              "existing": 2,
+              "new": 2
+            },
+            "pellet_silo_m3": 0.5,
+            "gas_capacity_gj": null
+          },
+          "trucks": {
+            "wc": 0,
+            "wp": 0,
+            "bq": 0
+          },
+          "closing_m3": {
+            "wc": 0.0,
+            "wp": 0.0,
+            "bq": 0.0
+          },
+          "burns": {
+            "existing": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              }
+            },
+            "new": {
+              "wc": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "wp": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              },
+              "bq": {
+                "fresh_m3": 0.0,
+                "stored_m3": 0.0
+              }
+            }
+          },
+          "gas_gj": 2.0,
+          "inventory_by_fuel": {
+            "wc": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            },
+            "wp": {
+              "opening": 0.0,
+              "delivered": 0.0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            },
+            "bq": {
+              "opening": 0.0,
+              "delivered": 0,
+              "fresh_burn": 0.0,
+              "stored_burn": 0.0,
+              "closing": 0.0
+            }
+          },
+          "biomass_gj_by_plant_and_fuel": {
+            "existing": {
+              "wc": 0.0,
+              "wp": 0.0,
+              "bq": 0.0
+            },
+            "new": {
+              "wc": 0.0,
+              "wp": 0.0,
+              "bq": 0.0
+            }
+          },
+          "cost": 6.0,
+          "emissions_tco2e": 1.0
+        }
+      ]
+    }
+  ],
+  "annual": [
+    {
+      "scenario_id": "gams-historical-inputs",
+      "data_kind": "historical_input_experiment",
+      "campus_inputs_validated": false,
+      "days_requested": 3,
+      "emissions_accuracy": "unverified_factors_and_heat_basis",
+      "solver": {
+        "backend": "HiGHS via SciPy milp",
+        "scipy_version": "1.18.1",
+        "highs_version": "1.12.0",
+        "status_code": 0,
+        "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+        "runtime_seconds": 0.08356199995614588,
+        "time_limit_seconds": 15.0,
+        "solver_reported_objective": 1206354.8999999969,
+        "best_bound": 1206354.8999999969,
+        "mip_gap": 0.0
+      },
+      "validation": "verified_against_stated_scenario",
+      "input_sha256": "4bd8e21fffcff5bce506f657c02047d33ccb66a3223c1f2d533056d8494ae0a0"
+    },
+    {
+      "scenario_id": "gams-historical-inputs",
+      "data_kind": "historical_input_experiment",
+      "campus_inputs_validated": false,
+      "days_requested": 7,
+      "emissions_accuracy": "unverified_factors_and_heat_basis",
+      "solver": {
+        "backend": "HiGHS via SciPy milp",
+        "scipy_version": "1.18.1",
+        "highs_version": "1.12.0",
+        "status_code": 0,
+        "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+        "runtime_seconds": 1.8843594999052584,
+        "time_limit_seconds": 20.0,
+        "solver_reported_objective": 2811863.4924832555,
+        "best_bound": 2811863.4924832555,
+        "mip_gap": 0.0
+      },
+      "validation": "verified_against_stated_scenario",
+      "input_sha256": "670fb4a8285269dfd9debc10120fb55853ae4b30ea44041e733b452f2da1087d"
+    },
+    {
+      "scenario_id": "gams-historical-inputs",
+      "data_kind": "historical_input_experiment",
+      "campus_inputs_validated": false,
+      "days_requested": 365,
+      "emissions_accuracy": "unverified_factors_and_heat_basis",
+      "solver": {
+        "backend": "HiGHS via SciPy milp",
+        "scipy_version": "1.18.1",
+        "highs_version": "1.12.0",
+        "status_code": 1,
+        "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+        "runtime_seconds": 30.132984600029886,
+        "time_limit_seconds": 30.0,
+        "solver_reported_objective": 146497618.56941557,
+        "best_bound": 146455283.18291345,
+        "mip_gap": 0.000288983445024609
+      },
+      "validation": "audited_feasible_incumbent",
+      "input_sha256": "4c372a262a694e99449d01efe40c320541beed241ffa0c64a738b966a4fa7e37"
+    },
+    {
+      "scenario_id": "report-narrative-capacity",
+      "data_kind": "historical_input_experiment",
+      "campus_inputs_validated": false,
+      "days_requested": 365,
+      "emissions_accuracy": "unverified_factors_and_heat_basis",
+      "solver": {
+        "backend": "HiGHS via SciPy milp",
+        "scipy_version": "1.18.1",
+        "highs_version": "1.12.0",
+        "status_code": 1,
+        "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+        "runtime_seconds": 30.11344760004431,
+        "time_limit_seconds": 30.0,
+        "solver_reported_objective": 152217297.30696815,
+        "best_bound": 152200046.36180055,
+        "mip_gap": 0.00011333104366468278
+      },
+      "validation": "audited_feasible_incumbent",
+      "input_sha256": "0c86c60595f67eefae2b0c6eafbe716728005ff2d3c9500acc9abb8e4e818d9e"
+    },
+    {
+      "scenario_id": "report-table-emissions",
+      "data_kind": "historical_input_experiment",
+      "campus_inputs_validated": false,
+      "days_requested": 365,
+      "emissions_accuracy": "unverified_factors_and_heat_basis",
+      "solver": {
+        "backend": "HiGHS via SciPy milp",
+        "scipy_version": "1.18.1",
+        "highs_version": "1.12.0",
+        "status_code": 1,
+        "message": "Time limit reached. (HiGHS Status 13: Time limit reached)",
+        "runtime_seconds": 30.09869679994881,
+        "time_limit_seconds": 30.0,
+        "solver_reported_objective": 146497618.56941557,
+        "best_bound": 146455283.18291345,
+        "mip_gap": 0.000288983445024609
+      },
+      "validation": "audited_feasible_incumbent",
+      "input_sha256": "6e93a6be5891741d66a11741b24e0a1f3d711f5b51db67c4d017bcfd9df68b3e"
+    }
+  ]
+}
