@@ -1,5 +1,7 @@
 # Phase 2 · Small-scale cost MILP validation
 
+**Authors:** Mohamad Jamalzehi and Kosar Ghazali.
+
 This phase uses a **synthetic test fixture** with one fuel, one biomass
 plant, and three days. The historical campus model, academic PDF, and
 Phase 1 validator are unchanged. No campus optimization or Pareto analysis

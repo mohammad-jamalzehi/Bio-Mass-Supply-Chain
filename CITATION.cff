@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite both authors."
+type: software
+title: "Bio-Mass Supply Chain"
+authors:
+  - given-names: Mohamad
+    family-names: Jamalzehi
+  - given-names: Kosar
+    family-names: Ghazali
+repository-code: "https://github.com/mohammad-jamalzehi/Bio-Mass-Supply-Chain"

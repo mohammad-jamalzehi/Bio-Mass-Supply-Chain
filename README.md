@@ -1,5 +1,9 @@
 # Biomass Supply Chain Optimization
 
+**Authors:** Mohamad Jamalzehi and Kosar Ghazali.
+
+[Revised manuscript](web/public/research/biomass-supply-chain.pdf) | [LaTeX sources](paper/) | [Research website setup](web/README.md)
+
 > A mixed-integer programming model exploring the cost and emissions implications of biomass sourcing, transportation, storage, and heat production.
 
 **Domain:** operations research · energy systems · supply chain analytics  

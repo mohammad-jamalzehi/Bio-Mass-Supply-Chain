@@ -1,5 +1,7 @@
 # Phase 1 · Proposed biomass accounting formulation
 
+**Authors:** Mohamad Jamalzehi and Kosar Ghazali.
+
 The original [GAMS model](../Bio-mass%20Supply%20Chain.gms) and
 [academic report](../Bio-mass%20Supply%20Chain.pdf) are historical references.
 This proposal and its arithmetic checks do not solve the model. The examples

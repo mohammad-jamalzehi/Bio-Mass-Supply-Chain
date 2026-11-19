@@ -1,0 +1,100 @@
+{
+  "scenario_id": "gams-historical-inputs",
+  "label": "GAMS historical numerical inputs under the corrected formulation",
+  "horizon_days": 365,
+  "assumptions": [
+    "365 identical daily demand inputs transcribed from GAMS; the demand magnitude remains unconfirmed.",
+    "Full trucks; constant fuel properties; pellet silo included within total end-of-day storage and applies to pellets only.",
+    "Zero opening and final stock for each fuel are explicit experimental assumptions.",
+    "Natural gas capacity is unspecified and modeled uncapped.",
+    "Emissions factors are interpreted provisionally per useful GJ; biomass factor applied to both plants."
+  ],
+  "parameters": {
+    "feeds": {
+      "wc": [
+        110,
+        0.15,
+        0.3,
+        12.5,
+        20
+      ],
+      "wp": [
+        110,
+        0.75,
+        0.1,
+        18,
+        90
+      ],
+      "bq": [
+        110,
+        1.2,
+        0.12,
+        19,
+        136
+      ]
+    },
+    "efficiencies": {
+      "existing": {
+        "wc": 0.735,
+        "wp": 0.763,
+        "bq": 0.761
+      },
+      "new": {
+        "wc": 0.768,
+        "wp": 0.811,
+        "bq": 0.807
+      }
+    },
+    "daily": {
+      "demand_gj": 12624,
+      "truck_limit": 6,
+      "total_storage_m3": 412,
+      "plant_heat_capacity_gj": {
+        "existing": 518.4,
+        "new": 1555.2
+      },
+      "pellet_silo_m3": 192,
+      "gas_capacity_gj": null
+    },
+    "initial_m3": {
+      "wc": 0,
+      "wp": 0,
+      "bq": 0
+    },
+    "terminal_m3": {
+      "wc": 0,
+      "wp": 0,
+      "bq": 0
+    },
+    "gas_cost_per_useful_gj": 37,
+    "emissions_per_useful_gj": {
+      "biomass": 0.96,
+      "gas": 0.5
+    },
+    "day_overrides": {}
+  },
+  "alternatives": {
+    "report-narrative-capacity": {
+      "label": "Report narrative 12 MW addition with other GAMS inputs",
+      "note": "New capacity uses 12 MW times 24 continuous hours (1036.8 useful GJ/day); all other inputs including demand and factors follow GAMS.",
+      "overrides": {
+        "daily": {
+          "plant_heat_capacity_gj": {
+            "existing": 518.4,
+            "new": 1036.8
+          }
+        }
+      }
+    },
+    "report-table-emissions": {
+      "label": "Report Table 1 emissions factors with GAMS capacities",
+      "note": "Use report Table 1 factors provisionally per useful GJ; reporting only, with no carbon cost or emissions constraint.",
+      "overrides": {
+        "emissions_per_useful_gj": {
+          "biomass": 0.094,
+          "gas": 0.056
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,112 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Mohamad Jamalzehi, Kosar Ghazali"><title>docs/phase-4-annual.md</title>
+<style>
+body{font:16px system-ui,sans-serif;margin:1.5rem;color:#193943;background:#f8f8f3}
+pre{overflow:auto;padding:1rem;border:1px solid #dce4db;background:white;line-height:1.5}
+pre span{display:block}pre span:target{background:#dbeee4}
+a{color:#116d61}
+</style></head><body><a href="../../../">Research website</a><h1>docs/phase-4-annual.md</h1>
+<p>Project authors: Mohamad Jamalzehi and Kosar Ghazali</p>
+<pre><code><span id="L1"><a href="#L1">   1</a> # Phase 4 · Historical input reconciliation</span>
+<span id="L2"><a href="#L2">   2</a> </span>
+<span id="L3"><a href="#L3">   3</a> **Authors:** Mohamad Jamalzehi and Kosar Ghazali.</span>
+<span id="L4"><a href="#L4">   4</a> </span>
+<span id="L5"><a href="#L5">   5</a> These experiments use the corrected Phase 3 mathematics. Agreement between</span>
+<span id="L6"><a href="#L6">   6</a> the source and the report means transcription agreement, not validation of</span>
+<span id="L7"><a href="#L7">   7</a> campus operations. The GAMS file and report are unchanged.</span>
+<span id="L8"><a href="#L8">   8</a> </span>
+<span id="L9"><a href="#L9">   9</a> ## Parameter reconciliation</span>
+<span id="L10"><a href="#L10">  10</a> </span>
+<span id="L11"><a href="#L11">  11</a> Feedstock triplets are in wood chips, pellets, briquettes order. The PDF</span>
+<span id="L12"><a href="#L12">  12</a> narrative is on page 1, Tables 1–2 on page 2, and Tables 3–5 on page 3.</span>
+<span id="L13"><a href="#L13">  13</a> </span>
+<span id="L14"><a href="#L14">  14</a> | Input and unit | GAMS source | Academic report | Experiment treatment |</span>
+<span id="L15"><a href="#L15">  15</a> | --- | --- | --- | --- |</span>
+<span id="L16"><a href="#L16">  16</a> | Horizon | 365 days | Fuel properties held constant for 365 days | 365 daily periods |</span>
+<span id="L17"><a href="#L17">  17</a> | Campus demand, useful GJ/day | 12,624 every day, about 146.1 MW average | No corroborating daily demand in its data tables | All supplied variants retain 12,624 as an unverified source input. |</span>
+<span id="L18"><a href="#L18">  18</a> | Purchase price, source $/dry tonne | 20 / 90 / 136 | Same | Retained. Currency base year and procurement scope remain open. |</span>
+<span id="L19"><a href="#L19">  19</a> | Gas price, source $/useful GJ | 37 | 37 | Retained. Gas supply limit is unspecified and modeled uncapped. |</span>
+<span id="L20"><a href="#L20">  20</a> | Existing / new efficiencies | (0.735, 0.763, 0.761) / (0.768, 0.811, 0.807) | Same | Used as dimensionless useful-heat conversion factors. |</span>
+<span id="L21"><a href="#L21">  21</a> | Truck volume, m³ per full truck | 110 / 110 / 110 | Same | Full truck interpretation retained. |</span>
+<span id="L22"><a href="#L22">  22</a> | Shared truck limit, trucks/day | 6 | 6 | Retained. |</span>
+<span id="L23"><a href="#L23">  23</a> | Total / pellet silo storage, m³ | 412 / 192 | Same volumes | Use a pellet-only cap inside total closing storage. The original equation applied 192 to each fuel. Whether the real capacities are additive remains unresolved. |</span>
+<span id="L24"><a href="#L24">  24</a> | Existing conversion capacity | 518.4 GJ/day | 518.4 GJ and 6 MW | Same if available continuously for 24 hours. |</span>
+<span id="L25"><a href="#L25">  25</a> | New conversion capacity | 1,555.2 GJ/day assigned to new alone | Table 1 gives 1,555.2. Narrative says a 12 MW addition and 18 MW combined. | Base retains table number. Separate narrative alternative sets 1,036.8 GJ/day for new. |</span>
+<span id="L26"><a href="#L26">  26</a> | Heating values, GJ/dry tonne | 12.5 / 18 / 19 | Same | Retained constant. |</span>
+<span id="L27"><a href="#L27">  27</a> | Moisture fractions | 0.30 / 0.10 / 0.12 | Same | Interpreted on a wet-mass basis. |</span>
+<span id="L28"><a href="#L28">  28</a> | Delivered density, wet tonnes/m³ | 0.15 / 0.75 / 1.2 | Same | Retained constant. |</span>
+<span id="L29"><a href="#L29">  29</a> | Biomass / gas emissions factors, declared tCO₂e/GJ heat | 0.96 / 0.5 | 0.094 / 0.056 | Separate factor alternatives. Basis and scope unverified. Provisional per useful GJ and one biomass factor for both plants. |</span>
+<span id="L30"><a href="#L30">  30</a> | Carbon price, allowance, compliance target | 50 $/tCO₂e, 2,000 tCO₂e, 2,000 tCO₂e | Same | Documented only. The original policy settings and four deviation placeholders are inactive in the solved objectives. |</span>
+<span id="L31"><a href="#L31">  31</a> | Opening and terminal stocks | No trustworthy explicit boundary targets | Unresolved | Explicit experimental zero stocks per fuel at both endpoints. |</span>
+<span id="L32"><a href="#L32">  32</a> </span>
+<span id="L33"><a href="#L33">  33</a> ## Reproduce</span>
+<span id="L34"><a href="#L34">  34</a> </span>
+<span id="L35"><a href="#L35">  35</a> Use the pinned Phase 2 Python dependencies. Run from the repository root.</span>
+<span id="L36"><a href="#L36">  36</a> </span>
+<span id="L37"><a href="#L37">  37</a> ```powershell</span>
+<span id="L38"><a href="#L38">  38</a> python -m pip install -r requirements-phase2.txt</span>
+<span id="L39"><a href="#L39">  39</a> python -B -m unittest discover -s tests -v</span>
+<span id="L40"><a href="#L40">  40</a> python -B -m optimization.annual --days 3 --time-limit 15</span>
+<span id="L41"><a href="#L41">  41</a> python -B -m optimization.annual --days 7 --time-limit 30</span>
+<span id="L42"><a href="#L42">  42</a> python -B -m optimization.annual --scenario gams-historical-inputs --time-limit 30 --output runs/gams</span>
+<span id="L43"><a href="#L43">  43</a> python -B -m optimization.annual --scenario report-narrative-capacity --time-limit 30 --output runs/report-capacity</span>
+<span id="L44"><a href="#L44">  44</a> python -B -m optimization.annual --scenario report-table-emissions --time-limit 30 --output runs/report-factors</span>
+<span id="L45"><a href="#L45">  45</a> ```</span>
+<span id="L46"><a href="#L46">  46</a> </span>
+<span id="L47"><a href="#L47">  47</a> The [scenario file](../scenarios/annual.json) holds inputs separately from</span>
+<span id="L48"><a href="#L48">  48</a> solver code. Feedstock lists are positional in this order: full truck volume,</span>
+<span id="L49"><a href="#L49">  49</a> wet density, moisture, dry heating value, and price per dry tonne. Daily</span>
+<span id="L50"><a href="#L50">  50</a> overrides use day numbers as strings and replace named fields. The report</span>
+<span id="L51"><a href="#L51">  51</a> alternatives change one assumption at a time. Both retain the unconfirmed</span>
+<span id="L52"><a href="#L52">  52</a> GAMS demand. The emissions alternative has no effect on the objective or</span>
+<span id="L53"><a href="#L53">  53</a> constraints. Alternative optimal plans can still differ if there are ties.</span>
+<span id="L54"><a href="#L54">  54</a> The scenario SHA-256 includes the effective inputs, assumptions and horizon.</span>
+<span id="L55"><a href="#L55">  55</a> A shortened experiment imposes its final stock policy at the shorter cutoff.</span>
+<span id="L56"><a href="#L56">  56</a> </span>
+<span id="L57"><a href="#L57">  57</a> The CLI calls the unchanged sparse Phase 3 MILP across the requested days.</span>
+<span id="L58"><a href="#L58">  58</a> In its dedicated process a scoped solver wrapper adds a time limit and retains</span>
+<span id="L59"><a href="#L59">  59</a> the raw SciPy outcome. Prices are temporarily represented in thousands of</span>
+<span id="L60"><a href="#L60">  60</a> source dollars to improve numerical summation and are converted back for audit</span>
+<span id="L61"><a href="#L61">  61</a> and export. Negative solver values within the existing Phase 3 tolerance of</span>
+<span id="L62"><a href="#L62">  62</a> zero are set to zero before audit. Larger violations remain visible. No</span>
+<span id="L63"><a href="#L63">  63</a> physical constraint changes.</span>
+<span id="L64"><a href="#L64">  64</a> </span>
+<span id="L65"><a href="#L65">  65</a> For both optimal outcomes and time-limited incumbents, the audit checks each</span>
+<span id="L66"><a href="#L66">  66</a> day&#x27;s Phase 3 constraints, reconciles whole-horizon material balances by fuel,</span>
+<span id="L67"><a href="#L67">  67</a> and independently recomputes cost, heat, and emissions. The solver objective</span>
+<span id="L68"><a href="#L68">  68</a> must match the recomputed cost. On optimal termination the bound must match it</span>
+<span id="L69"><a href="#L69">  69</a> too. A separate incumbent decoder reads the original Phase 3 variable order,</span>
+<span id="L70"><a href="#L70">  70</a> checked against the Phase 3 plan on optimal runs.</span>
+<span id="L71"><a href="#L71">  71</a> </span>
+<span id="L72"><a href="#L72">  72</a> ## Exports and statuses</span>
+<span id="L73"><a href="#L73">  73</a> </span>
+<span id="L74"><a href="#L74">  74</a> Specify an output directory to produce `result.json` and `flows.csv`.</span>
+<span id="L75"><a href="#L75">  75</a> JSON includes inputs and assumptions, scenario digest, solver version and</span>
+<span id="L76"><a href="#L76">  76</a> elapsed seconds, objective, bound, gap, validation outcome, and audited</span>
+<span id="L77"><a href="#L77">  77</a> plans when available. A null solver field means unavailable. CSV has one</span>
+<span id="L78"><a href="#L78">  78</a> inventory/delivery row per fuel and day, one burn/heat row per plant and fuel</span>
+<span id="L79"><a href="#L79">  79</a> per day, and one gas row per day. The gas row also carries the daily demand,</span>
+<span id="L80"><a href="#L80">  80</a> cost, and emissions totals once. A run without an audited plan exports the</span>
+<span id="L81"><a href="#L81">  81</a> CSV header only. The CLI returns 0 for an audited optimum and 2 for other</span>
+<span id="L82"><a href="#L82">  82</a> outcomes after recording diagnostics. Runtime is machine-dependent.</span>
+<span id="L83"><a href="#L83">  83</a> </span>
+<span id="L84"><a href="#L84">  84</a> ## Recorded validation runs</span>
+<span id="L85"><a href="#L85">  85</a> </span>
+<span id="L86"><a href="#L86">  86</a> The recorded JSON and CSV files are under [results/phase4](../results/phase4).</span>
+<span id="L87"><a href="#L87">  87</a> They use SciPy 1.18.1 with HiGHS 1.12.0. Costs are source dollars.</span>
+<span id="L88"><a href="#L88">  88</a> </span>
+<span id="L89"><a href="#L89">  89</a> | Scenario | Days | Termination | Audited cost | Best bound | MIP gap |</span>
+<span id="L90"><a href="#L90">  90</a> | --- | ---: | --- | ---: | ---: | ---: |</span>
+<span id="L91"><a href="#L91">  91</a> | GAMS inputs | 3 | Optimal | 1,206,354.90 | 1,206,354.90 | 0% |</span>
+<span id="L92"><a href="#L92">  92</a> | GAMS inputs | 7 | Optimal | 2,811,863.49 | 2,811,863.49 | 0% |</span>
+<span id="L93"><a href="#L93">  93</a> | GAMS inputs | 365 | 30 s time limit | 146,497,618.57 | 146,455,283.18 | 0.02890% |</span>
+<span id="L94"><a href="#L94">  94</a> | Report narrative plant capacity | 365 | 30 s time limit | 152,217,297.31 | 152,200,046.36 | 0.01133% |</span>
+<span id="L95"><a href="#L95">  95</a> | Report table emissions factors | 365 | 30 s time limit | 146,497,618.57 | 146,455,283.18 | 0.02890% |</span>
+<span id="L96"><a href="#L96">  96</a> </span>
+<span id="L97"><a href="#L97">  97</a> Every annual incumbent passed the physical and cost audit. Optimality was</span>
+<span id="L98"><a href="#L98">  98</a> not proven on the 365-day runs. The base and report-factor runs produced</span>
+<span id="L99"><a href="#L99">  99</a> the same cost and heat totals in these runs. Their emissions differ solely</span>
+<span id="L100"><a href="#L100"> 100</a> because the factors used for accounting differ. These outputs describe the</span>
+<span id="L101"><a href="#L101"> 101</a> specified experiments. The input assumptions and emissions accuracy remain</span>
+<span id="L102"><a href="#L102"> 102</a> unverified.</span></code></pre></body></html>

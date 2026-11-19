@@ -1,0 +1,396 @@
+{
+  "schema_version": 1,
+  "data_kind": "historical_input_experiment",
+  "campus_inputs_validated": false,
+  "emissions_accuracy": "unverified_factors_and_heat_basis",
+  "scenario_id": "gams-historical-inputs",
+  "label": "GAMS historical numerical inputs under the corrected formulation",
+  "days_requested": 3,
+  "input_sha256": "4bd8e21fffcff5bce506f657c02047d33ccb66a3223c1f2d533056d8494ae0a0",
+  "assumptions": [
+    "365 identical daily demand inputs transcribed from GAMS; the demand magnitude remains unconfirmed.",
+    "Full trucks; constant fuel properties; pellet silo included within total end-of-day storage and applies to pellets only.",
+    "Zero opening and final stock for each fuel are explicit experimental assumptions.",
+    "Natural gas capacity is unspecified and modeled uncapped.",
+    "Emissions factors are interpreted provisionally per useful GJ; biomass factor applied to both plants.",
+    "Short-horizon check applies the terminal policy at the requested cutoff."
+  ],
+  "units": {
+    "cost": "source dollars",
+    "heat": "GJ useful",
+    "volume": "m3",
+    "emissions": "tCO2e provisional"
+  },
+  "inputs": {
+    "name": "gams-historical-inputs",
+    "feedstocks": {
+      "wc": {
+        "truck_m3": 110,
+        "wet_density": 0.15,
+        "moisture": 0.3,
+        "heating_value": 12.5,
+        "cost_per_dry_tonne": 20
+      },
+      "wp": {
+        "truck_m3": 110,
+        "wet_density": 0.75,
+        "moisture": 0.1,
+        "heating_value": 18,
+        "cost_per_dry_tonne": 90
+      },
+      "bq": {
+        "truck_m3": 110,
+        "wet_density": 1.2,
+        "moisture": 0.12,
+        "heating_value": 19,
+        "cost_per_dry_tonne": 136
+      }
+    },
+    "plants": {
+      "existing": {
+        "efficiency": {
+          "wc": 0.735,
+          "wp": 0.763,
+          "bq": 0.761
+        },
+        "emissions_per_useful_gj": {
+          "wc": 0.96,
+          "wp": 0.96,
+          "bq": 0.96
+        }
+      },
+      "new": {
+        "efficiency": {
+          "wc": 0.768,
+          "wp": 0.811,
+          "bq": 0.807
+        },
+        "emissions_per_useful_gj": {
+          "wc": 0.96,
+          "wp": 0.96,
+          "bq": 0.96
+        }
+      }
+    },
+    "days": [
+      {
+        "demand_gj": 12624,
+        "truck_limit": 6,
+        "total_storage_m3": 412,
+        "plant_heat_capacity_gj": {
+          "existing": 518.4,
+          "new": 1555.2
+        },
+        "pellet_silo_m3": 192,
+        "gas_capacity_gj": null
+      },
+      {
+        "demand_gj": 12624,
+        "truck_limit": 6,
+        "total_storage_m3": 412,
+        "plant_heat_capacity_gj": {
+          "existing": 518.4,
+          "new": 1555.2
+        },
+        "pellet_silo_m3": 192,
+        "gas_capacity_gj": null
+      },
+      {
+        "demand_gj": 12624,
+        "truck_limit": 6,
+        "total_storage_m3": 412,
+        "plant_heat_capacity_gj": {
+          "existing": 518.4,
+          "new": 1555.2
+        },
+        "pellet_silo_m3": 192,
+        "gas_capacity_gj": null
+      }
+    ],
+    "initial_m3": {
+      "wc": 0,
+      "wp": 0,
+      "bq": 0
+    },
+    "terminal_m3": {
+      "wc": 0,
+      "wp": 0,
+      "bq": 0
+    },
+    "gas_cost_per_useful_gj": 37,
+    "gas_emissions_per_useful_gj": 0.5
+  },
+  "solver": {
+    "backend": "HiGHS via SciPy milp",
+    "scipy_version": "1.18.1",
+    "highs_version": "1.12.0",
+    "status_code": 0,
+    "message": "Optimization terminated successfully. (HiGHS Status 7: Optimal)",
+    "runtime_seconds": 0.08356199995614588,
+    "time_limit_seconds": 15.0,
+    "solver_reported_objective": 1206354.8999999969,
+    "best_bound": 1206354.8999999969,
+    "mip_gap": 0.0
+  },
+  "validation": "verified_against_stated_scenario",
+  "totals": {
+    "cost": 1206354.8999999969,
+    "demand_gj": 37872.0,
+    "gas_gj": 31651.199999999917,
+    "biomass_gj": 6220.800000000085,
+    "emissions_tco2e": 21797.568000000043,
+    "fuel_balance_residual_m3": {
+      "wc": 1.0231815394945443e-12,
+      "wp": -1.2505552149377763e-12,
+      "bq": 0.0
+    }
+  },
+  "days": [
+    {
+      "day": 1,
+      "demand_gj": 12624,
+      "trucks": {
+        "wc": 4,
+        "wp": 2,
+        "bq": 0
+      },
+      "closing_m3": {
+        "wc": 281.6028318024682,
+        "wp": 22.733430492692605,
+        "bq": 0.0
+      },
+      "burns": {
+        "existing": {
+          "wc": {
+            "fresh_m3": 158.3971681975318,
+            "stored_m3": 0.0
+          },
+          "wp": {
+            "fresh_m3": 39.4367298032397,
+            "stored_m3": 0.0
+          },
+          "bq": {
+            "fresh_m3": 0.0,
+            "stored_m3": 0.0
+          }
+        },
+        "new": {
+          "wc": {
+            "fresh_m3": -0.0,
+            "stored_m3": 0.0
+          },
+          "wp": {
+            "fresh_m3": 157.82983970406903,
+            "stored_m3": 0.0
+          },
+          "bq": {
+            "fresh_m3": 0.0,
+            "stored_m3": 0.0
+          }
+        }
+      },
+      "gas_gj": 10550.4,
+      "inventory_by_fuel": {
+        "wc": {
+          "opening": 0,
+          "delivered": 440,
+          "fresh_burn": 158.3971681975318,
+          "stored_burn": 0.0,
+          "closing": 281.6028318024682
+        },
+        "wp": {
+          "opening": 0,
+          "delivered": 220,
+          "fresh_burn": 197.26656950730873,
+          "stored_burn": 0.0,
+          "closing": 22.733430492692605
+        },
+        "bq": {
+          "opening": 0,
+          "delivered": 0,
+          "fresh_burn": 0.0,
+          "stored_burn": 0.0,
+          "closing": 0.0
+        }
+      },
+      "biomass_gj_by_plant_and_fuel": {
+        "existing": {
+          "wc": 152.80376819555644,
+          "wp": 365.5962318044435,
+          "bq": 0.0
+        },
+        "new": {
+          "wc": 0.0,
+          "wp": 1555.1999999999998,
+          "bq": 0.0
+        }
+      },
+      "cost": 404653.8,
+      "emissions_tco2e": 7265.856
+    },
+    {
+      "day": 2,
+      "demand_gj": 12624,
+      "trucks": {
+        "wc": 2,
+        "wp": 2,
+        "bq": 0
+      },
+      "closing_m3": {
+        "wc": 369.5025462186726,
+        "wp": 42.49745378133822,
+        "bq": 0.0
+      },
+      "burns": {
+        "existing": {
+          "wc": {
+            "fresh_m3": 0.0,
+            "stored_m3": 0.0
+          },
+          "wp": {
+            "fresh_m3": 55.91961555264307,
+            "stored_m3": 0.0
+          },
+          "bq": {
+            "fresh_m3": 0.0,
+            "stored_m3": 0.0
+          }
+        },
+        "new": {
+          "wc": {
+            "fresh_m3": 0.0,
+            "stored_m3": 132.1002855837946
+          },
+          "wp": {
+            "fresh_m3": 121.58293066601814,
+            "stored_m3": 22.73343049269308
+          },
+          "bq": {
+            "fresh_m3": 0.0,
+            "stored_m3": 0.0
+          }
+        }
+      },
+      "gas_gj": 10550.400000000005,
+      "inventory_by_fuel": {
+        "wc": {
+          "opening": 281.6028318024682,
+          "delivered": 220,
+          "fresh_burn": 0.0,
+          "stored_burn": 132.1002855837946,
+          "closing": 369.5025462186726
+        },
+        "wp": {
+          "opening": 22.733430492692605,
+          "delivered": 220,
+          "fresh_burn": 177.50254621866122,
+          "stored_burn": 22.73343049269308,
+          "closing": 42.49745378133822
+        },
+        "bq": {
+          "opening": 0.0,
+          "delivered": 0,
+          "fresh_burn": 0.0,
+          "stored_burn": 0.0,
+          "closing": 0.0
+        }
+      },
+      "biomass_gj_by_plant_and_fuel": {
+        "existing": {
+          "wc": 0.0,
+          "wp": 518.4,
+          "bq": 0.0
+        },
+        "new": {
+          "wc": 133.15708786846494,
+          "wp": 1422.0429121315349,
+          "bq": 0.0
+        }
+      },
+      "cost": 404191.80000000016,
+      "emissions_tco2e": 7265.8560000000025
+    },
+    {
+      "day": 3,
+      "demand_gj": 12624,
+      "trucks": {
+        "wc": 2,
+        "wp": 1,
+        "bq": 0
+      },
+      "closing_m3": {
+        "wc": 0.0,
+        "wp": 0.0,
+        "bq": 0.0
+      },
+      "burns": {
+        "existing": {
+          "wc": {
+            "fresh_m3": 220.0,
+            "stored_m3": 317.37609329454915
+          },
+          "wp": {
+            "fresh_m3": 0.0,
+            "stored_m3": 0.0
+          },
+          "bq": {
+            "fresh_m3": 0.0,
+            "stored_m3": 0.0
+          }
+        },
+        "new": {
+          "wc": {
+            "fresh_m3": 0.0,
+            "stored_m3": 52.12645292412345
+          },
+          "wp": {
+            "fresh_m3": 110.0,
+            "stored_m3": 42.49745378133823
+          },
+          "bq": {
+            "fresh_m3": 0.0,
+            "stored_m3": 0.0
+          }
+        }
+      },
+      "gas_gj": 10550.399999999914,
+      "inventory_by_fuel": {
+        "wc": {
+          "opening": 369.5025462186726,
+          "delivered": 220,
+          "fresh_burn": 220.0,
+          "stored_burn": 369.5025462186726,
+          "closing": 0.0
+        },
+        "wp": {
+          "opening": 42.49745378133822,
+          "delivered": 110,
+          "fresh_burn": 110.0,
+          "stored_burn": 42.49745378133823,
+          "closing": 0.0
+        },
+        "bq": {
+          "opening": 0.0,
+          "delivered": 0,
+          "fresh_burn": 0.0,
+          "stored_burn": 0.0,
+          "closing": 0.0
+        }
+      },
+      "biomass_gj_by_plant_and_fuel": {
+        "existing": {
+          "wc": 518.4000000000854,
+          "wp": 0.0,
+          "bq": 0.0
+        },
+        "new": {
+          "wc": 52.54346454751643,
+          "wp": 1502.6565354524835,
+          "bq": 0.0
+        }
+      },
+      "cost": 397509.29999999685,
+      "emissions_tco2e": 7265.856000000039
+    }
+  ]
+}

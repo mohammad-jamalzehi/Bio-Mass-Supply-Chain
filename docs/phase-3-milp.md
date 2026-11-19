@@ -1,5 +1,7 @@
 # Phase 3 · Multi-feedstock and multi-plant validation
 
+**Authors:** Mohamad Jamalzehi and Kosar Ghazali.
+
 This model tests wood chips (wc), wood pellets (wp), briquettes (bq),
 and the existing and new biomass plants. All results in this phase are
 **synthetic test fixtures**. The historical model and Phase 1–2 files

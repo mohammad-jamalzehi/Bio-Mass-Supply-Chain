@@ -1,0 +1,160 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Mohamad Jamalzehi, Kosar Ghazali"><title>tests/test_phase3.py</title>
+<style>
+body{font:16px system-ui,sans-serif;margin:1.5rem;color:#193943;background:#f8f8f3}
+pre{overflow:auto;padding:1rem;border:1px solid #dce4db;background:white;line-height:1.5}
+pre span{display:block}pre span:target{background:#dbeee4}
+a{color:#116d61}
+</style></head><body><a href="../../../">Research website</a><h1>tests/test_phase3.py</h1>
+<p>Project authors: Mohamad Jamalzehi and Kosar Ghazali</p>
+<pre><code><span id="L1"><a href="#L1">   1</a> import json</span>
+<span id="L2"><a href="#L2">   2</a> import unittest</span>
+<span id="L3"><a href="#L3">   3</a> from dataclasses import replace</span>
+<span id="L4"><a href="#L4">   4</a> </span>
+<span id="L5"><a href="#L5">   5</a> from optimization.example_phase3 import synthetic_scenario</span>
+<span id="L6"><a href="#L6">   6</a> from optimization.phase3 import Burn, DayPlan, solve, synthetic_result, verify_plan</span>
+<span id="L7"><a href="#L7">   7</a> </span>
+<span id="L8"><a href="#L8">   8</a> </span>
+<span id="L9"><a href="#L9">   9</a> class MultiPlantTests(unittest.TestCase):</span>
+<span id="L10"><a href="#L10">  10</a>     def test_three_hand_enumerated_competitions(self):</span>
+<span id="L11"><a href="#L11">  11</a>         # With no day-2 trucks and at most one on day 1, these are all choices.</span>
+<span id="L12"><a href="#L12">  12</a>         # Chips: &lt;=6 GJ over two days, or 4 + (2 - 4/3)*2 GJ without storage.</span>
+<span id="L13"><a href="#L13">  13</a>         # Briquettes: 6 GJ in either case. Pellets need 0.5 m3 closing on day 1.</span>
+<span id="L14"><a href="#L14">  14</a>         candidates = {</span>
+<span id="L15"><a href="#L15">  15</a>             &quot;base&quot;: {&quot;gas&quot;: 24, &quot;wc&quot;: 8.4, &quot;wp&quot;: 5, &quot;bq&quot;: 10},</span>
+<span id="L16"><a href="#L16">  16</a>             &quot;tight-silo&quot;: {&quot;gas&quot;: 24, &quot;wc&quot;: 8.4, &quot;bq&quot;: 10},</span>
+<span id="L17"><a href="#L17">  17</a>             &quot;no-storage&quot;: {&quot;gas&quot;: 24, &quot;wc&quot;: 10.4, &quot;bq&quot;: 10},</span>
+<span id="L18"><a href="#L18">  18</a>         }</span>
+<span id="L19"><a href="#L19">  19</a>         for case, costs in candidates.items():</span>
+<span id="L20"><a href="#L20">  20</a>             with self.subTest(case=case):</span>
+<span id="L21"><a href="#L21">  21</a>                 scenario = synthetic_scenario(case)</span>
+<span id="L22"><a href="#L22">  22</a>                 result = solve(scenario)</span>
+<span id="L23"><a href="#L23">  23</a>                 winner = min(costs, key=costs.__getitem__)</span>
+<span id="L24"><a href="#L24">  24</a>                 self.assertEqual(result.status, 0)</span>
+<span id="L25"><a href="#L25">  25</a>                 self.assertAlmostEqual(result.best_bound, costs[winner])</span>
+<span id="L26"><a href="#L26">  26</a>                 self.assertAlmostEqual(result.mip_gap, 0)</span>
+<span id="L27"><a href="#L27">  27</a>                 self.assertAlmostEqual(sum(day.cost for day in result.audit), costs[winner])</span>
+<span id="L28"><a href="#L28">  28</a>                 self.assertEqual(result.plans[0].trucks, {f: int(f == winner) for f in scenario.feedstocks})</span>
+<span id="L29"><a href="#L29">  29</a>                 self.assertEqual(sum(result.plans[1].trucks.values()), 0)</span>
+<span id="L30"><a href="#L30">  30</a> </span>
+<span id="L31"><a href="#L31">  31</a>     def test_two_binding_plants_and_pellet_inventory_continuity(self):</span>
+<span id="L32"><a href="#L32">  32</a>         result = solve(synthetic_scenario())</span>
+<span id="L33"><a href="#L33">  33</a>         first, second = result.audit</span>
+<span id="L34"><a href="#L34">  34</a>         self.assertAlmostEqual(first.biomass_gj_by_plant_and_fuel[&quot;existing&quot;][&quot;wp&quot;], 2)</span>
+<span id="L35"><a href="#L35">  35</a>         self.assertAlmostEqual(first.biomass_gj_by_plant_and_fuel[&quot;new&quot;][&quot;wp&quot;], 4)</span>
+<span id="L36"><a href="#L36">  36</a>         self.assertAlmostEqual(first.inventory_by_fuel[&quot;wp&quot;].closing, 0.5)</span>
+<span id="L37"><a href="#L37">  37</a>         self.assertAlmostEqual(second.inventory_by_fuel[&quot;wp&quot;].opening, 0.5)</span>
+<span id="L38"><a href="#L38">  38</a>         self.assertAlmostEqual(second.inventory_by_fuel[&quot;wp&quot;].stored_burn, 0.5)</span>
+<span id="L39"><a href="#L39">  39</a>         self.assertAlmostEqual(second.inventory_by_fuel[&quot;wp&quot;].closing, 0)</span>
+<span id="L40"><a href="#L40">  40</a>         self.assertAlmostEqual(second.biomass_gj_by_plant_and_fuel[&quot;new&quot;][&quot;wp&quot;], 2)</span>
+<span id="L41"><a href="#L41">  41</a>         self.assertAlmostEqual(sum(day.emissions_tco2e for day in result.audit), 0.8)</span>
+<span id="L42"><a href="#L42">  42</a> </span>
+<span id="L43"><a href="#L43">  43</a>     def test_fresh_and_stored_can_supply_either_plant(self):</span>
+<span id="L44"><a href="#L44">  44</a>         scenario = synthetic_scenario()</span>
+<span id="L45"><a href="#L45">  45</a>         first = replace(scenario.days[0], truck_limit=0, gas_capacity_gj=0)</span>
+<span id="L46"><a href="#L46">  46</a>         initial = {&quot;wc&quot;: 0, &quot;wp&quot;: 2, &quot;bq&quot;: 0}</span>
+<span id="L47"><a href="#L47">  47</a>         scenario = replace(scenario, days=(first,), initial_m3=initial)</span>
+<span id="L48"><a href="#L48">  48</a>         result = solve(scenario)</span>
+<span id="L49"><a href="#L49">  49</a>         self.assertEqual(result.status, 0)</span>
+<span id="L50"><a href="#L50">  50</a>         for plant in scenario.plants:</span>
+<span id="L51"><a href="#L51">  51</a>             self.assertAlmostEqual(result.plans[0].burns[plant][&quot;wp&quot;].stored_m3, 1)</span>
+<span id="L52"><a href="#L52">  52</a>             self.assertAlmostEqual(result.plans[0].burns[plant][&quot;wp&quot;].fresh_m3, 0)</span>
+<span id="L53"><a href="#L53">  53</a> </span>
+<span id="L54"><a href="#L54">  54</a>     def test_two_fuels_delivered_and_burned_together(self):</span>
+<span id="L55"><a href="#L55">  55</a>         scenario = synthetic_scenario()</span>
+<span id="L56"><a href="#L56">  56</a>         first = replace(scenario.days[0], truck_limit=2, total_storage_m3=2, gas_capacity_gj=0)</span>
+<span id="L57"><a href="#L57">  57</a>         # Each required closing stock forces its own truck. Both trucks also</span>
+<span id="L58"><a href="#L58">  58</a>         # leave 1 m3 to burn. Chips must supply 3 GJ in the new unit; the</span>
+<span id="L59"><a href="#L59">  59</a>         # briquettes split 2 GJ existing and 1 GJ new to meet demand of 6.</span>
+<span id="L60"><a href="#L60">  60</a>         scenario = replace(</span>
+<span id="L61"><a href="#L61">  61</a>             scenario, days=(first,), terminal_m3={&quot;wc&quot;: 1, &quot;wp&quot;: 0, &quot;bq&quot;: 1},</span>
+<span id="L62"><a href="#L62">  62</a>         )</span>
+<span id="L63"><a href="#L63">  63</a>         result = solve(scenario)</span>
+<span id="L64"><a href="#L64">  64</a>         self.assertEqual(result.status, 0)</span>
+<span id="L65"><a href="#L65">  65</a>         self.assertEqual(result.plans[0].trucks, {&quot;wc&quot;: 1, &quot;wp&quot;: 0, &quot;bq&quot;: 1})</span>
+<span id="L66"><a href="#L66">  66</a>         self.assertAlmostEqual(result.best_bound, 6.4)</span>
+<span id="L67"><a href="#L67">  67</a>         self.assertAlmostEqual(result.mip_gap, 0)</span>
+<span id="L68"><a href="#L68">  68</a>         self.assertAlmostEqual(result.audit[0].biomass_gj_by_plant_and_fuel[&quot;new&quot;][&quot;wc&quot;], 3)</span>
+<span id="L69"><a href="#L69">  69</a>         self.assertAlmostEqual(result.audit[0].biomass_gj_by_plant_and_fuel[&quot;existing&quot;][&quot;bq&quot;], 2)</span>
+<span id="L70"><a href="#L70">  70</a>         self.assertAlmostEqual(result.audit[0].biomass_gj_by_plant_and_fuel[&quot;new&quot;][&quot;bq&quot;], 1)</span>
+<span id="L71"><a href="#L71">  71</a>         self.assertEqual(solve(replace(scenario, days=(replace(first, truck_limit=1),))).status, 2)</span>
+<span id="L72"><a href="#L72">  72</a>         self.assertEqual(solve(replace(scenario, days=(replace(first, total_storage_m3=1.9),))).status, 2)</span>
+<span id="L73"><a href="#L73">  73</a> </span>
+<span id="L74"><a href="#L74">  74</a>     def test_mixed_deliveries_cannot_exceed_shared_truck_limit(self):</span>
+<span id="L75"><a href="#L75">  75</a>         scenario = synthetic_scenario()</span>
+<span id="L76"><a href="#L76">  76</a>         first = replace(scenario.days[0], total_storage_m3=5, pellet_silo_m3=3)</span>
+<span id="L77"><a href="#L77">  77</a>         plan = DayPlan({&quot;wc&quot;: 1, &quot;wp&quot;: 1, &quot;bq&quot;: 0}, {&quot;wc&quot;: 2, &quot;wp&quot;: 2.5, &quot;bq&quot;: 0},</span>
+<span id="L78"><a href="#L78">  78</a>                        {p: {f: Burn(0, 0) for f in scenario.feedstocks} for p in scenario.plants}, 6)</span>
+<span id="L79"><a href="#L79">  79</a>         with self.assertRaisesRegex(ValueError, &quot;shared limit&quot;):</span>
+<span id="L80"><a href="#L80">  80</a>             verify_plan(replace(scenario, days=(first,), terminal_m3=None), [plan])</span>
+<span id="L81"><a href="#L81">  81</a> </span>
+<span id="L82"><a href="#L82">  82</a>     def test_total_storage_is_a_shared_limit_and_silo_is_pellet_only(self):</span>
+<span id="L83"><a href="#L83">  83</a>         scenario = synthetic_scenario()</span>
+<span id="L84"><a href="#L84">  84</a>         first = replace(scenario.days[0], truck_limit=2, total_storage_m3=4, pellet_silo_m3=3)</span>
+<span id="L85"><a href="#L85">  85</a>         plan = DayPlan({&quot;wc&quot;: 1, &quot;wp&quot;: 1, &quot;bq&quot;: 0}, {&quot;wc&quot;: 2, &quot;wp&quot;: 2.5, &quot;bq&quot;: 0},</span>
+<span id="L86"><a href="#L86">  86</a>                        {p: {f: Burn(0, 0) for f in scenario.feedstocks} for p in scenario.plants}, 6)</span>
+<span id="L87"><a href="#L87">  87</a>         new = replace(scenario, days=(first,), terminal_m3=None)</span>
+<span id="L88"><a href="#L88">  88</a>         with self.assertRaisesRegex(ValueError, &quot;total storage&quot;):</span>
+<span id="L89"><a href="#L89">  89</a>             verify_plan(new, [plan])</span>
+<span id="L90"><a href="#L90">  90</a>         with self.assertRaisesRegex(ValueError, &quot;pellet silo&quot;):</span>
+<span id="L91"><a href="#L91">  91</a>             verify_plan(replace(new, days=(replace(first, total_storage_m3=5, pellet_silo_m3=1),)), [plan])</span>
+<span id="L92"><a href="#L92">  92</a>         nonpellets = replace(plan, trucks={&quot;wc&quot;: 1, &quot;wp&quot;: 0, &quot;bq&quot;: 1}, closing_m3={&quot;wc&quot;: 2, &quot;wp&quot;: 0, &quot;bq&quot;: 2})</span>
+<span id="L93"><a href="#L93">  93</a>         verify_plan(replace(new, days=(replace(first, pellet_silo_m3=0),)), [nonpellets])</span>
+<span id="L94"><a href="#L94">  94</a> </span>
+<span id="L95"><a href="#L95">  95</a>     def test_cross_plant_fuel_availability_checked_by_phase_one(self):</span>
+<span id="L96"><a href="#L96">  96</a>         scenario = synthetic_scenario()</span>
+<span id="L97"><a href="#L97">  97</a>         result = solve(scenario)</span>
+<span id="L98"><a href="#L98">  98</a>         two_plants = result.plans[0]</span>
+<span id="L99"><a href="#L99">  99</a>         # Keep the same plant heat and inventory arithmetic but misclassify a</span>
+<span id="L100"><a href="#L100"> 100</a>         # fresh draw as stored even though the day started empty.</span>
+<span id="L101"><a href="#L101"> 101</a>         burns = {plant: dict(fuels) for plant, fuels in two_plants.burns.items()}</span>
+<span id="L102"><a href="#L102"> 102</a>         burns[&quot;new&quot;][&quot;wp&quot;] = Burn(0.5, 0.5)</span>
+<span id="L103"><a href="#L103"> 103</a>         mutated = replace(two_plants, burns=burns)</span>
+<span id="L104"><a href="#L104"> 104</a>         with self.assertRaisesRegex(ValueError, &quot;stored burn exceeds opening&quot;):</span>
+<span id="L105"><a href="#L105"> 105</a>             verify_plan(scenario, (mutated, result.plans[1]))</span>
+<span id="L106"><a href="#L106"> 106</a> </span>
+<span id="L107"><a href="#L107"> 107</a>         second = result.plans[1]</span>
+<span id="L108"><a href="#L108"> 108</a>         burns = {plant: dict(fuels) for plant, fuels in second.burns.items()}</span>
+<span id="L109"><a href="#L109"> 109</a>         burns[&quot;new&quot;][&quot;wp&quot;] = Burn(0.5, 0)</span>
+<span id="L110"><a href="#L110"> 110</a>         with self.assertRaisesRegex(ValueError, &quot;fresh burn exceeds deliveries&quot;):</span>
+<span id="L111"><a href="#L111"> 111</a>             verify_plan(scenario, (two_plants, replace(second, burns=burns)))</span>
+<span id="L112"><a href="#L112"> 112</a> </span>
+<span id="L113"><a href="#L113"> 113</a>     def test_independent_audit_rejects_plant_capacity_violation(self):</span>
+<span id="L114"><a href="#L114"> 114</a>         scenario = synthetic_scenario()</span>
+<span id="L115"><a href="#L115"> 115</a>         result = solve(scenario)</span>
+<span id="L116"><a href="#L116"> 116</a>         first = replace(scenario.days[0], plant_heat_capacity_gj={&quot;existing&quot;: 1, &quot;new&quot;: 4})</span>
+<span id="L117"><a href="#L117"> 117</a>         with self.assertRaisesRegex(ValueError, &quot;existing heat capacity&quot;):</span>
+<span id="L118"><a href="#L118"> 118</a>             verify_plan(replace(scenario, days=(first, scenario.days[1])), result.plans)</span>
+<span id="L119"><a href="#L119"> 119</a> </span>
+<span id="L120"><a href="#L120"> 120</a>     def test_infeasible_with_no_pellet_storage_and_no_gas(self):</span>
+<span id="L121"><a href="#L121"> 121</a>         scenario = synthetic_scenario(&quot;no-storage&quot;)</span>
+<span id="L122"><a href="#L122"> 122</a>         scenario = replace(scenario, days=tuple(replace(day, gas_capacity_gj=0) for day in scenario.days))</span>
+<span id="L123"><a href="#L123"> 123</a>         result = solve(scenario)</span>
+<span id="L124"><a href="#L124"> 124</a>         self.assertEqual(result.status, 2)</span>
+<span id="L125"><a href="#L125"> 125</a>         exported = synthetic_result(scenario, result)</span>
+<span id="L126"><a href="#L126"> 126</a>         self.assertIsNone(exported[&quot;totals&quot;])</span>
+<span id="L127"><a href="#L127"> 127</a>         self.assertEqual(exported[&quot;days&quot;], [])</span>
+<span id="L128"><a href="#L128"> 128</a>         json.dumps(exported, allow_nan=False)</span>
+<span id="L129"><a href="#L129"> 129</a> </span>
+<span id="L130"><a href="#L130"> 130</a>     def test_mixed_fuels_and_gas_emissions_added_once(self):</span>
+<span id="L131"><a href="#L131"> 131</a>         scenario = synthetic_scenario()</span>
+<span id="L132"><a href="#L132"> 132</a>         first = replace(scenario.days[0], truck_limit=2, total_storage_m3=2)</span>
+<span id="L133"><a href="#L133"> 133</a>         scenario = replace(scenario, days=(first,), terminal_m3=None)</span>
+<span id="L134"><a href="#L134"> 134</a>         burns = {p: {f: Burn(0, 0) for f in scenario.feedstocks} for p in scenario.plants}</span>
+<span id="L135"><a href="#L135"> 135</a>         burns[&quot;existing&quot;][&quot;wc&quot;] = Burn(1, 0)</span>
+<span id="L136"><a href="#L136"> 136</a>         burns[&quot;new&quot;][&quot;bq&quot;] = Burn(1, 0)</span>
+<span id="L137"><a href="#L137"> 137</a>         plan = DayPlan({&quot;wc&quot;: 1, &quot;wp&quot;: 0, &quot;bq&quot;: 1}, {&quot;wc&quot;: 1, &quot;wp&quot;: 0, &quot;bq&quot;: 1}, burns, 1)</span>
+<span id="L138"><a href="#L138"> 138</a>         audit, = verify_plan(scenario, [plan])</span>
+<span id="L139"><a href="#L139"> 139</a>         self.assertAlmostEqual(audit.cost, 9.4)</span>
+<span id="L140"><a href="#L140"> 140</a>         self.assertAlmostEqual(audit.emissions_tco2e, 1.0)</span>
+<span id="L141"><a href="#L141"> 141</a> </span>
+<span id="L142"><a href="#L142"> 142</a>     def test_json_contract_has_daily_audited_values(self):</span>
+<span id="L143"><a href="#L143"> 143</a>         scenario = synthetic_scenario()</span>
+<span id="L144"><a href="#L144"> 144</a>         data = json.loads(json.dumps(synthetic_result(scenario, solve(scenario)), allow_nan=False))</span>
+<span id="L145"><a href="#L145"> 145</a>         self.assertEqual(data[&quot;data_kind&quot;], &quot;synthetic_test_fixture&quot;)</span>
+<span id="L146"><a href="#L146"> 146</a>         self.assertEqual(data[&quot;schema_version&quot;], 1)</span>
+<span id="L147"><a href="#L147"> 147</a>         self.assertEqual(data[&quot;solver&quot;][&quot;status&quot;], 0)</span>
+<span id="L148"><a href="#L148"> 148</a>         self.assertAlmostEqual(data[&quot;totals&quot;][&quot;cost&quot;], 5)</span>
+<span id="L149"><a href="#L149"> 149</a>         self.assertAlmostEqual(data[&quot;days&quot;][0][&quot;inventory_by_fuel&quot;][&quot;wp&quot;][&quot;delivered&quot;], 2.5)</span>
+<span id="L150"><a href="#L150"> 150</a>         self.assertAlmostEqual(data[&quot;days&quot;][0][&quot;burns&quot;][&quot;existing&quot;][&quot;wp&quot;][&quot;fresh_m3&quot;], 1)</span></code></pre></body></html>
